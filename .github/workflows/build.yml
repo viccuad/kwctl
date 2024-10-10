@@ -18,7 +18,9 @@ jobs:
         targetarch:
           - aarch64
           - x86_64
-
+    outputs:
+      artifact-hashes-aarch64: string
+      artifact-hashes-x86_64: string
     permissions:
       packages: write
       id-token: write
@@ -36,15 +38,32 @@ jobs:
           target: ${{matrix.targetarch}}-unknown-linux-musl
           override: true
 
-      - uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
-        with:
-          use-cross: true
-          command: build
-          args: --release --target ${{matrix.targetarch}}-unknown-linux-musl
+      # - uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
+      #   with:
+      #     use-cross: true
+      #     command: build
+      #     args: --release --target ${{matrix.targetarch}}-unknown-linux-musl
+      #
+      # - run: mv target/${{ matrix.targetarch }}-unknown-linux-musl/release/kwctl kwctl-linux-${{ matrix.targetarch }}
+      #
+      # - name: Smoke test build
+      #   if: matrix.targetarch == 'x86_64'
+      #   run: ./kwctl-linux-x86_64 --help
+
+      - name: fake build
+        run: echo "foo" > kwctl-linux-${{ matrix.targetarch }}
+
+      - name: Generate hashes of artifacts for provenance
+        shell: bash
+        id: hashes
+        run: |
+          set -euo pipefail
+          # sha256sum generates sha256 hash for all artifacts.
+          # base64 -w0 encodes to base64 and outputs on a single line.
+          echo "artifact-hashes-${{ matrix.targetarch }}=$(sha256sum kwctl-linux-${{ matrix.targetarch }} scripts/kubewarden-load-policies.sh scripts/kubewarden-save-policies.sh | base64 -w0)" >> "$GITHUB_OUTPUT"
 
       - name: Sign kwctl
         run: |
-          mv target/${{ matrix.targetarch }}-unknown-linux-musl/release/kwctl kwctl-linux-${{ matrix.targetarch }}
           cosign sign-blob --yes kwctl-linux-${{ matrix.targetarch }} --output-certificate kwctl-linux-${{ matrix.targetarch}}.pem --output-signature kwctl-linux-${{ matrix.targetarch }}.sig
 
       - run: zip -j9 kwctl-linux-${{ matrix.targetarch }}.zip kwctl-linux-${{ matrix.targetarch }} kwctl-linux-${{ matrix.targetarch }}.sig kwctl-linux-${{ matrix.targetarch }}.pem
@@ -100,6 +119,9 @@ jobs:
       matrix:
         targetarch: ["aarch64", "x86_64"]
     runs-on: macos-latest
+    outputs:
+      artifact-hashes-aarch64: string
+      artifact-hashes-x86_64: string
     permissions:
       id-token: write
     steps:
@@ -116,17 +138,29 @@ jobs:
 
       - run: rustup target add ${{ matrix.targetarch }}-apple-darwin
 
-      - name: Build kwctl
-        uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
-        with:
-          command: build
-          args: --target=${{ matrix.targetarch }}-apple-darwin --release
+      # - name: Build kwctl
+      #   uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
+      #   with:
+      #     command: build
+      #     args: --target=${{ matrix.targetarch }}-apple-darwin --release
 
-      - run: mv target/${{ matrix.targetarch }}-apple-darwin/release/kwctl kwctl-darwin-${{ matrix.targetarch }}
+      # - run: mv target/${{ matrix.targetarch }}-apple-darwin/release/kwctl kwctl-darwin-${{ matrix.targetarch }}
 
-      - name: Smoke test build
-        if: matrix.targetarch == 'x86_64'
-        run: ./kwctl-darwin-x86_64 --help
+      # - name: Smoke test build
+      #   if: matrix.targetarch == 'x86_64'
+      #   run: ./kwctl-darwin-x86_64 --help
+
+      - name: fake build
+        run: echo "foo" > kwctl-darwin-${{ matrix.targetarch }}
+
+      - name: Generate hashes of artifacts for provenance
+        shell: bash
+        id: hashes
+        run: |
+          set -euo pipefail
+          # sha256sum generates sha256 hash for all artifacts.
+          # base64 -w0 encodes to base64 and outputs on a single line.
+          echo "artifact-hashes-${{ matrix.targetarch }}=$(shasum -a 256 kwctl-darwin-${{ matrix.targetarch }} | base64 -w0)" >> "$GITHUB_OUTPUT"
 
       - name: Sign kwctl
         run: cosign sign-blob --yes kwctl-darwin-${{ matrix.targetarch }} --output-certificate kwctl-darwin-${{ matrix.targetarch }}.pem --output-signature kwctl-darwin-${{ matrix.targetarch }}.sig
@@ -179,6 +213,8 @@ jobs:
         targetarch: ["x86_64"]
         os: ["windows-latest"]
     runs-on: ${{ matrix.os }}
+    outputs:
+      artifact-hashes-x86_64: string
     permissions:
       id-token: write
     steps:
@@ -202,10 +238,22 @@ jobs:
           command: build
           args: --target=x86_64-pc-windows-msvc --release
 
-      - run: mv target/x86_64-pc-windows-msvc/release/kwctl.exe kwctl-windows-x86_64.exe
+      # - run: mv target/x86_64-pc-windows-msvc/release/kwctl.exe kwctl-windows-x86_64.exe
 
-      - name: Smoke test build
-        run: .\kwctl-windows-x86_64.exe --help
+      # - name: Smoke test build
+      #   run: .\kwctl-windows-x86_64.exe --help
+
+      - name: fake build
+        run: echo "foo" > kwctl-windows-x86_64.exe
+
+      - name: Generate hashes of artifacts for provenance
+        shell: bash
+        id: hashes
+        run: |
+          set -euo pipefail
+          # sha256sum generates sha256 hash for all artifacts.
+          # base64 -w0 encodes to base64 and outputs on a single line.
+          echo "artifact-hashes-${{ matrix.targetarch }}=$(sha256sum -t kwctl-windows-${{ matrix.targetarch }} | base64 -w0)" >> "$GITHUB_OUTPUT"
 
       - name: Sign kwctl
         run: cosign sign-blob --yes kwctl-windows-x86_64.exe --output-certificate kwctl-windows-x86_64.pem --output-signature kwctl-windows-x86_64.sig
@@ -252,3 +300,64 @@ jobs:
             kwctl-windows-x86_64-sbom.spdx
             kwctl-windows-x86_64-sbom.spdx.cert
             kwctl-windows-x86_64-sbom.spdx.sig
+
+  combine_hashes:
+    name: Generate artifact hashes
+    needs: [build-linux-binaries, build-darwin-binaries, build-windows-x86_64]
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read # To read the workflow path.
+      id-token: write # To sign the provenance.
+      contents: write # To add assets to a release.
+    steps:
+      - name: Combine artifact hashes into single file
+        shell: bash
+        run: |
+          # To make sure we catch all the hashes, deal with the job outputs
+          # globally instead of 1 by 1, by reading all of them as a JSON:
+          # echo "${{ toJSON(needs.build-linux-binaries.outputs) }}" | jq -r '.[] | @base64d' | sed "/^$/d" >> hashes.txt
+          # echo "${{ toJSON(needs.build-darwin-binaries.outputs) }}" | jq -r '.[] | @base64d' | sed "/^$/d" >> hashes.txt
+          # echo "${{ toJSON(needs.build-windows-x64_64.outputs) }}" | jq -r '.[] | @base64d' | sed "/^$/d" >> hashes.txt
+
+          # another option is to appending them 1 by 1:
+          echo "${{ needs.build-linux-binaries.outputs.artifact-hashes-x86_64 }}" >> hashes.txt
+          echo "${{ needs.build-linux-binaries.outputs.artifact-hashes-aarch64 }}" >> hashes.txt
+          echo "${{ needs.build-darwin-binaries.outputs.artifact-hashes-x86_64 }}" >> hashes.txt
+          echo "${{ needs.build-darwin-binaries.outputs.artifact-hashes-aarch64 }}" >> hashes.txt
+          echo "${{ needs.build-windows-x86_64.outputs.artifact-hashes-x86_64 }}" >> hashes.txt
+
+          echo "hashes=$(cat hashes.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+  provenance:
+    needs: [combine_hashes]
+    permissions:
+      actions: read # To read the workflow path.
+      id-token: write # To sign the provenance.
+      contents: write # To read hashes, push artifacts (which we don't do but the workflow as for its perms)
+    # For now, one must use the tag instead of git hash for referencing this GHA.
+    # See: https://github.com/slsa-framework/slsa-github-generator/blob/main/internal/builders/generic/README.md#referencing-the-slsa-generator
+    # This is one of the reasons we have the generator on its own job.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    with:
+      provenance-name: kwctl-provenance.multiple
+      base64-subjects: "${{ needs.combine_hashes.outputs.hashes }}"
+      upload-assets: false # don't upload to release
+
+  upload_provenance:
+    needs: [provenance]
+    permissions:
+      contents: write # To upload artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: ls
+        shell: bash
+        run: |
+          ls -la
+
+      - name: Upload provenance files
+        uses: actions/upload-artifact@604373da6381bf24206979c74d06a550515601b9 # v4.4.1
+        with:
+          name: kwctl-provenance
+          path: |
+            kwctl-provenance.multiple.intoto.json1
+            kwctl-provenance.multiple.intoto.json1.sig

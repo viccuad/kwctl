@@ -21,6 +21,8 @@ jobs:
     permissions:
       id-token: write
       packages: write
+      actions: read
+      contents: write
 
   release:
     name: Create release
@@ -111,6 +113,7 @@ jobs:
               './kwctl-windows-x86_64-sbom/kwctl-windows-x86_64-sbom.spdx',
               './kwctl-windows-x86_64-sbom/kwctl-windows-x86_64-sbom.spdx.cert',
               './kwctl-windows-x86_64-sbom/kwctl-windows-x86_64-sbom.spdx.sig',
+              './kwctl-provenance.intoto.json1',
               ]
             const {RELEASE_ID} = process.env
 

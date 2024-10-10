@@ -333,6 +333,14 @@ The output should be:
 Verified OK
 ```
 
+## Provenance and SBOMs
+
+The generated provenance will probably be wrapped in a DSSE envelope and
+encoded in base64. Check the human-readable result running cat
+encoded-artifact.intoto.jsonl | jq -r '.payload' | base64 -d | jq.
+
+SBOMS explain.
+
 ## Security disclosure
 
 See [SECURITY.md](https://github.com/kubewarden/community/blob/main/SECURITY.md) on the kubewarden/community repo.
