@@ -4,11 +4,21 @@
     "schedule:earlyMondays",
     "helpers:pinGitHubActionDigests"
   ],
-  "labels": ["dependencies"],
-  "lockFileMaintenance": { "enabled": true },
-  "major": { "enabled": false },
-  "minor": { "enabled": false },
-  "patch": { "enabled": true },
+  "labels": [
+    "dependencies"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "major": {
+    "enabled": false
+  },
+  "minor": {
+    "enabled": false
+  },
+  "patch": {
+    "enabled": true
+  },
   "packageRules": [
     {
       "matchPackagePatterns": [
@@ -19,6 +29,15 @@
       ],
       "groupName": "all patchlevel dependencies",
       "groupSlug": "all-patch"
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchPackageNames": [
+        "slsa-framework/slsa-github-generator"
+      ],
+      "pinDigests": false
     }
   ],
   "rebaseWhen": "behind-base-branch"
