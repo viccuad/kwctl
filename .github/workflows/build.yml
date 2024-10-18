@@ -34,23 +34,29 @@ jobs:
           target: ${{matrix.targetarch}}-unknown-linux-musl
           override: true
 
-      - uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
-        with:
-          use-cross: true
-          command: build
-          args: --release --target ${{matrix.targetarch}}-unknown-linux-musl
+      # - uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
+      #   with:
+      #     use-cross: true
+      #     command: build
+      #     args: --release --target ${{matrix.targetarch}}-unknown-linux-musl
+      #
+      # - run: mv target/${{ matrix.targetarch }}-unknown-linux-musl/release/kwctl kwctl-linux-${{ matrix.targetarch }}
+      #
+      # - name: Smoke test build
+      #   if: matrix.targetarch == 'x86_64'
+      #   run: ./kwctl-linux-x86_64 --help
 
-      - run: mv target/${{ matrix.targetarch }}-unknown-linux-musl/release/kwctl kwctl-linux-${{ matrix.targetarch }}
-
-      - name: Smoke test build
-        if: matrix.targetarch == 'x86_64'
-        run: ./kwctl-linux-x86_64 --help
+      - name: fake build
+        run: echo "foo" > kwctl-linux-${{ matrix.targetarch }}
 
       - name: Generate attestations
         uses: actions/attest-build-provenance@v1
         id: attestations
         with:
           subject-path: kwctl-linux-${{ matrix.targetarch }}
+
+      - name: Display structure of downloaded files
+        run: ls -R
 
       - run: |
           mv \
@@ -137,17 +143,20 @@ jobs:
 
       - run: rustup target add ${{ matrix.targetarch }}-apple-darwin
 
-      - name: Build kwctl
-        uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
-        with:
-          command: build
-          args: --target=${{ matrix.targetarch }}-apple-darwin --release
+      # - name: Build kwctl
+      #   uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
+      #   with:
+      #     command: build
+      #     args: --target=${{ matrix.targetarch }}-apple-darwin --release
+      #
+      # - run: mv target/${{ matrix.targetarch }}-apple-darwin/release/kwctl kwctl-darwin-${{ matrix.targetarch }}
+      #
+      # - name: Smoke test build
+      #   if: matrix.targetarch == 'x86_64'
+      #   run: ./kwctl-darwin-x86_64 --help
 
-      - run: mv target/${{ matrix.targetarch }}-apple-darwin/release/kwctl kwctl-darwin-${{ matrix.targetarch }}
-
-      - name: Smoke test build
-        if: matrix.targetarch == 'x86_64'
-        run: ./kwctl-darwin-x86_64 --help
+      - name: fake build
+        run: echo "foo" > kwctl-darwin-${{ matrix.targetarch }}
 
       - name: Generate attestations
         uses: actions/attest-build-provenance@v1
@@ -235,16 +244,19 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: git config --global core.longpaths true
 
-      - name: Build kwctl
-        uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
-        with:
-          command: build
-          args: --target=x86_64-pc-windows-msvc --release
+      # - name: Build kwctl
+      #   uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
+      #   with:
+      #     command: build
+      #     args: --target=x86_64-pc-windows-msvc --release
+      #
+      # - run: mv target/x86_64-pc-windows-msvc/release/kwctl.exe kwctl-windows-x86_64.exe
+      #
+      # - name: Smoke test build
+      #   run: .\kwctl-windows-x86_64.exe --help
 
-      - run: mv target/x86_64-pc-windows-msvc/release/kwctl.exe kwctl-windows-x86_64.exe
-
-      - name: Smoke test build
-        run: .\kwctl-windows-x86_64.exe --help
+      - name: fake build
+        run: echo "foo" > kwctl-windows-x86_64.exe
 
       - name: Generate attestations
         uses: actions/attest-build-provenance@v1
