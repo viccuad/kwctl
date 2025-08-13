@@ -132,6 +132,7 @@ pub(crate) enum ContextAwareConfiguration {
 pub(crate) struct PolicyMember {
     pub uri: String,
     pub settings: PolicyGroupMemberSettings,
+    pub user_execution_cfg: PolicyExecutionConfiguration,
 }
 
 /// Converts a Kubewarden CRD AdmissionPolicy into a PolicyDefinition.
@@ -223,7 +224,14 @@ impl TryFrom<ClusterAdmissionPolicyGroup> for PolicyDefinition {
             let settings: PolicyGroupMemberSettings =
                 policy.try_into().map_err(anyhow::Error::msg)?;
 
-            policy_members.insert(policy_id.clone(), PolicyMember { uri, settings });
+            policy_members.insert(
+                policy_id.clone(),
+                PolicyMember {
+                    uri,
+                    settings,
+                    user_execution_cfg: PolicyExecutionConfiguration::PolicyDefined,
+                },
+            );
         }
 
         let policy_mode = spec.mode.unwrap_or_default().into();
@@ -256,7 +264,14 @@ impl TryFrom<AdmissionPolicyGroup> for PolicyDefinition {
             let settings: PolicyGroupMemberSettings =
                 policy.try_into().map_err(anyhow::Error::msg)?;
 
-            policy_members.insert(policy_id.clone(), PolicyMember { uri, settings });
+            policy_members.insert(
+                policy_id.clone(),
+                PolicyMember {
+                    uri,
+                    settings,
+                    user_execution_cfg: PolicyExecutionConfiguration::PolicyDefined,
+                },
+            );
         }
 
         let policy_mode = spec.mode.unwrap_or_default().into();
@@ -667,6 +682,7 @@ mod tests {
                                 .expect("Failed to convert settings for member 1"),
                             ctx_aware_resources_allow_list: pgm_1_expected_context_aware_resources,
                         },
+                        user_execution_cfg: PolicyExecutionConfiguration::PolicyDefined,
                     },
                 ),
                 (
@@ -678,6 +694,7 @@ mod tests {
                                 .expect("Failed to convert settings for member 2"),
                             ctx_aware_resources_allow_list: BTreeSet::new(),
                         },
+                        user_execution_cfg: PolicyExecutionConfiguration::PolicyDefined,
                     },
                 ),
             ]),
